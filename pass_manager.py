@@ -1,12 +1,10 @@
 ''' IMPORTING PACKAGES '''
-
 from asyncio.windows_events import NULL
-from about import author, version
+from about import author, version, versions_log
 from re import A
 from sre_parse import State
 from tkinter import *
 from tkinter import ttk
-from tkinter import messagebox
 from winsound import MB_ICONHAND
 from db_entries import MainDatabase
 from db_groups import Database
@@ -17,13 +15,10 @@ db_entries = MainDatabase('entries.db')
 db_groups = Database('groups.db')
 
 class Pass_Manager:
-  global root
-  def __init__(self, app):
-    global root
-    root = app
+  def __init__(self, root):
     root.call('source', 'azure.tcl')
     root.call("set_theme", "light")
-    root.title('PassManager')
+    root.title(f'PassManager ({version})')
     root.geometry('800x400')
     root.resizable(0, 0)
     root.option_add('*tearOff', FALSE)
@@ -47,7 +42,7 @@ class Pass_Manager:
     menu_edit.add_command(label='Delete Group')
     menubar.add_cascade(menu=menu_about, label='About')
     menu_about.add_command(label='Author', command=lambda: self.info_window('Author', author))
-    menu_about.add_command(label='Version', command=lambda: self.info_window('Version', version))
+    menu_about.add_command(label='Version', command=lambda: self.info_window('Version', versions_log))
     root.config(menu=menubar)
 
     # Folders DB view
@@ -59,21 +54,19 @@ class Pass_Manager:
     entry_frame.grid(row=0, column=1, sticky=W+E)
 
     # Entry Scrollbars
-    scrollbary = ttk.Scrollbar(entry_frame, orient=VERTICAL)
-    scrollbarx = ttk.Scrollbar(entry_frame, orient=HORIZONTAL)
+    scrollbar_y = ttk.Scrollbar(entry_frame, orient=VERTICAL)
+    scrollbar_x = ttk.Scrollbar(entry_frame, orient=HORIZONTAL)
     # Entries Treeview
     self.entry_treeview = ttk.Treeview(entry_frame, columns=("c1", "c2", "c3"), show='headings')
-    self.entry_treeview.configure(yscrollcommand=scrollbary.set, xscrollcommand=scrollbarx.set)
+    self.entry_treeview.configure(y_scrollcommand=scrollbar_y.set, x_scrollcommand=scrollbar_x.set)
 
-    scrollbary.config(command=self.entry_treeview.yview)
-    scrollbary.pack(side=RIGHT, fill=Y)
-    scrollbarx.config(command=self.entry_treeview.xview)
-    scrollbarx.pack(side=BOTTOM, fill=X)
-    #self.entry_treeview.column("# 1", minwidth=0, width=20, stretch=NO, anchor=CENTER)
+    scrollbar_y.config(command=self.entry_treeview.y_view)
+    scrollbar_y.pack(side=RIGHT, fill=Y)
+    scrollbar_x.config(command=self.entry_treeview.x_view)
+    scrollbar_x.pack(side=BOTTOM, fill=X)
     self.entry_treeview.column("#1", anchor=CENTER)
     self.entry_treeview.column("#2", anchor=CENTER)
     self.entry_treeview.column("#3", anchor=CENTER)
-    #self.entry_treeview.heading("# 1", text='ID')
     self.entry_treeview.heading("#1", text='Name')
     self.entry_treeview.heading("#2", text='Login')
     self.entry_treeview.heading("#3", text='Password')
@@ -86,14 +79,16 @@ class Pass_Manager:
     scrollbar_x = ttk.Scrollbar(group_frame, orient=HORIZONTAL)
     # Folders Treeview
     self.group_treeview = ttk.Treeview(group_frame)
-    self.group_treeview.configure(yscrollcommand=scrollbar_y.set, xscrollcommand=scrollbar_x.set)
+    self.group_treeview.configure(y_scrollcommand=scrollbar_y.set, x_scrollcommand=scrollbar_x.set)
     self.group_treeview.heading("#0", text='DATABASE')
 
-    scrollbar_y.configure(command=self.group_treeview.yview)
+    scrollbar_y.configure(command=self.group_treeview.y_view)
     scrollbar_y.pack(side=RIGHT, fill=Y)
-    scrollbar_x.configure(command=self.group_treeview.xview)
+    scrollbar_x.configure(command=self.group_treeview.x_view)
     scrollbar_x.pack(side=BOTTOM, fill=X)
-    self.group_treeview.bind('<ButtonRelease-1>', self.select_group)
+    self.group_treeview.bind('<ButtonPress-1>', self.button_press)
+    self.group_treeview.bind('<B1-Motion>', self.show_motion)
+    self.group_treeview.bind('<ButtonRelease-1>', self.button_release)
     self.group_treeview.bind('<ButtonRelease-3>', self.add_group_menu)
     self.populate_groups()
 
@@ -120,6 +115,19 @@ class Pass_Manager:
 
   '''Group TreeView Functions'''
 
+  def button_press(self, event):
+    global group_iid
+    group_tv = self.group_treeview
+    if group_tv.identify_row(event.y) not in group_tv.selection():
+        group_tv.selection_set(group_tv.identify_row(event.y))
+    group_iid = group_tv.selection()
+
+  def show_motion(self, event):
+    self.group_treeview.configure(cursor="exchange")
+    self.group_tv = self.group_treeview
+    if self.group_tv.identify_row(event.y) not in self.group_tv.selection():
+      self.group_tv.selection_set(self.group_tv.identify_row(event.y))
+
   def populate_groups(self):
     self.clear_treeview(self.group_treeview)
 
@@ -130,24 +138,27 @@ class Pass_Manager:
       else:
         self.group_treeview.insert(row[2], 'end', row[0], text = row[1])
 
-  def select_group(self, event):
-    global group_iid, entry_iid, selected_group
+  def button_release(self, event):
+    global selected_group, target_parent_iid, entry_iid
+    group_tv = self.group_treeview
+    if group_tv.identify_row(event.y) not in group_tv.selection():
+        group_tv.selection_set(group_tv.identify_row(event.y))
+    target_parent_iid = group_tv.selection()
+    if 'group_iid' in globals() and len(group_iid) > 0 and group_iid[0] != target_parent_iid[0]:
+      group_tv.move(group_iid[0], target_parent_iid[0], 'end')
+      self.reassign_groups()
     if 'entry_iid' in globals() and len(entry_iid) > 0:
       temp = list(entry_iid)
       temp.clear()
       entry_iid = tuple(temp)
-    group_iid = self.group_treeview.selection()
-    if self.group_treeview.selection():
-      current_group = self.group_treeview.focus()
-      selected_group = self.group_treeview.item(current_group)
-      if self.group_treeview.identify_element(event.x, event.y) == '':
-        for i in self.group_treeview.selection():
-          self.group_treeview.selection_remove(i)
-        temp = list(group_iid)
-        temp.clear()
-        group_iid = tuple(temp)
-
+    if group_tv.selection():
+      current_group = group_tv.focus()
+      selected_group = group_tv.item(current_group)
     self.populate_entries()
+
+  def reassign_groups(self):
+    db_groups.update_parent(target_parent_iid[0], group_iid[0])
+
 
   def add_group_menu(self, event):
     if 'group_iid' in globals():
@@ -209,7 +220,10 @@ class Pass_Manager:
 
   def select_entry(self, event):
     global entry_iid, selected_entry
-    entry_iid = self.entry_treeview.selection()
+    entry_tv = self.entry_treeview
+    if entry_tv.identify_row(event.y) not in entry_tv.selection():
+      entry_tv.selection_set(entry_tv.identify_row(event.y))
+    entry_iid = entry_tv.selection()
     selected_entry = {'values': ''}
     if self.entry_treeview.selection():
       current_entry = self.entry_treeview.focus()
@@ -309,9 +323,9 @@ class Pass_Manager:
     # Multiline text
     text = Text(info_frame, height=8, width=50)
     scroll = ttk.Scrollbar(info_frame, orient=VERTICAL)
-    text.configure(yscrollcommand=scroll.set)
+    text.configure(y_scrollcommand=scroll.set)
     text.pack(side=LEFT)
-    scroll.config(command=text.yview)
+    scroll.config(command=text.y_view)
     scroll.pack(side=RIGHT, fill=Y)
     text.insert(END, content)
 

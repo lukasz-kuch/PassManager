@@ -24,5 +24,9 @@ class Database:
     self.cur.execute("UPDATE groups SET name = ? WHERE id = ?", (name, id))
     self.conn.commit()
 
+  def update_parent(self, parent, id):
+    self.cur.execute("UPDATE groups SET parent = ? WHERE id = ?", (parent, id))
+    self.conn.commit()
+
   def __del__(self):
     self.conn.close()
