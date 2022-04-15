@@ -1,11 +1,7 @@
 ''' IMPORTING PACKAGES '''
-from asyncio.windows_events import NULL
 from about import author, version, versions_log
-from re import A
-from sre_parse import State
 from tkinter import *
 from tkinter import ttk
-from winsound import MB_ICONHAND
 from db_entries import MainDatabase
 from db_groups import Database
 
@@ -17,7 +13,7 @@ db_groups = Database('groups.db')
 class Pass_Manager:
   def __init__(self, root):
     root.call('source', 'azure.tcl')
-    root.call("set_theme", "light")
+    root.call("set_theme", "dark")
     root.title(f'PassManager ({version})')
     root.geometry('800x400')
     root.resizable(0, 0)
@@ -54,16 +50,16 @@ class Pass_Manager:
     entry_frame.grid(row=0, column=1, sticky=W+E)
 
     # Entry Scrollbars
-    scrollbar_y = ttk.Scrollbar(entry_frame, orient=VERTICAL)
-    scrollbar_x = ttk.Scrollbar(entry_frame, orient=HORIZONTAL)
+    entry_scrollbar_y = ttk.Scrollbar(entry_frame, orient=VERTICAL)
+    entry_scrollbar_x = ttk.Scrollbar(entry_frame, orient=HORIZONTAL)
     # Entries Treeview
     self.entry_treeview = ttk.Treeview(entry_frame, columns=("c1", "c2", "c3"), show='headings')
-    self.entry_treeview.configure(y_scrollcommand=scrollbar_y.set, x_scrollcommand=scrollbar_x.set)
+    self.entry_treeview.configure(yscrollcommand=entry_scrollbar_y.set, xscrollcommand=entry_scrollbar_x.set)
 
-    scrollbar_y.config(command=self.entry_treeview.y_view)
-    scrollbar_y.pack(side=RIGHT, fill=Y)
-    scrollbar_x.config(command=self.entry_treeview.x_view)
-    scrollbar_x.pack(side=BOTTOM, fill=X)
+    entry_scrollbar_y.config(command=self.entry_treeview.yview)
+    entry_scrollbar_y.pack(side=RIGHT, fill=Y)
+    entry_scrollbar_x.config(command=self.entry_treeview.xview)
+    entry_scrollbar_x.pack(side=BOTTOM, fill=X)
     self.entry_treeview.column("#1", anchor=CENTER)
     self.entry_treeview.column("#2", anchor=CENTER)
     self.entry_treeview.column("#3", anchor=CENTER)
@@ -75,17 +71,17 @@ class Pass_Manager:
     self.entry_treeview.pack()
 
     # Scrollbar folders
-    scrollbar_y = ttk.Scrollbar(group_frame, orient=VERTICAL)
-    scrollbar_x = ttk.Scrollbar(group_frame, orient=HORIZONTAL)
+    group_scrollbar_y = ttk.Scrollbar(group_frame, orient=VERTICAL)
+    group_scrollbar_x = ttk.Scrollbar(group_frame, orient=HORIZONTAL)
     # Folders Treeview
     self.group_treeview = ttk.Treeview(group_frame)
-    self.group_treeview.configure(y_scrollcommand=scrollbar_y.set, x_scrollcommand=scrollbar_x.set)
+    self.group_treeview.configure(yscrollcommand=group_scrollbar_y.set, xscrollcommand=group_scrollbar_x.set)
     self.group_treeview.heading("#0", text='DATABASE')
 
-    scrollbar_y.configure(command=self.group_treeview.y_view)
-    scrollbar_y.pack(side=RIGHT, fill=Y)
-    scrollbar_x.configure(command=self.group_treeview.x_view)
-    scrollbar_x.pack(side=BOTTOM, fill=X)
+    group_scrollbar_y.configure(command=self.group_treeview.yview)
+    group_scrollbar_y.pack(side=RIGHT, fill=Y)
+    group_scrollbar_x.configure(command=self.group_treeview.xview)
+    group_scrollbar_x.pack(side=BOTTOM, fill=X)
     self.group_treeview.bind('<ButtonPress-1>', self.button_press)
     self.group_treeview.bind('<B1-Motion>', self.show_motion)
     self.group_treeview.bind('<ButtonRelease-1>', self.button_release)
