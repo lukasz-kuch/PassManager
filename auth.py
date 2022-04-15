@@ -3,11 +3,11 @@ from tkinter import ttk
 from pass_manager import Pass_Manager
 from functions import *
 
-credentials = load_json()
+config_file = check_json()
 
 class Authentication:
   def __init__(self, root):
-    if(credentials['login'] != '' and credentials['password'] != ''):
+    if config_file:
       self.login_window()
       geometry = '400x180'
       title = 'Login'
@@ -76,7 +76,7 @@ class Authentication:
 
   def validate_login(self):
     secured_password = hash_password(self.password.get())
-
+    credentials = load_json()
     if self.username.get() == credentials['login'] and secured_password  == credentials['password']:
       #Destroy current window
       root.destroy()

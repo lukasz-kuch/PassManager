@@ -1,5 +1,7 @@
 import hashlib
 import json
+import os
+from pickle import TRUE
 
 def hash_password(password):
   plaintext = password.encode()
@@ -11,10 +13,15 @@ def load_json():
   with open("config.json") as json_data_file:
     return json.load(json_data_file)
 
+def check_json():
+  if os.path.isfile('config.json') and os.access('config.json', os.R_OK):
+    return TRUE
+
 def write_json(login, password):
-  with open("config.json") as json_data_file:
-    data =  json.load(json_data_file)
-    data['login'] = login
-    data['password'] = hash_password(password)
-  with open('config.json', 'w') as json_data_file:
-    json.dump(data, json_data_file)
+  with open('config.json', 'w') as db_file:
+    data = {
+      'login': f'{login}',
+      'password': f'{password}'
+    }
+    json_string = json.dumps(data)
+    db_file.write(json_string)

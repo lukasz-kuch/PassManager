@@ -4,3 +4,4 @@
 /Pipfile.lock
 /test.py
 /__pycache__
+config.json
