@@ -1,5 +1,5 @@
 author = """Lukasz Kucharski
-Github: example@com
+Github: https://github.com/lukasz-kuch
 Docker: example@com
 Powershell Gallery: example@com"""
 
