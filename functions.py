@@ -21,7 +21,7 @@ def write_json(login, password):
   with open('config.json', 'w') as db_file:
     data = {
       'login': f'{login}',
-      'password': f'{password}'
+      'password': f'{hash_password(password)}'
     }
     json_string = json.dumps(data)
     db_file.write(json_string)
