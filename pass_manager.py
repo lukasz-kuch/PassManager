@@ -1,4 +1,5 @@
 ''' IMPORTING PACKAGES '''
+from textwrap import wrap
 from about import author, version, versions_log
 from tkinter import *
 from tkinter import ttk
@@ -13,7 +14,7 @@ db_groups = Database('groups.db')
 class Pass_Manager:
   def __init__(self, root):
     root.call('source', 'azure.tcl')
-    root.call("set_theme", "dark")
+    root.call("set_theme", "light")
     root.title(f'PassManager ({version})')
     root.geometry('800x400')
     root.resizable(0, 0)
@@ -126,12 +127,15 @@ class Pass_Manager:
 
   def populate_groups(self):
     self.clear_treeview(self.group_treeview)
-
     self.group_treeview.pack()
-    for row in db_groups.fetch():
+    groups = db_groups.fetch()
+    # get primary groups
+    for row in groups:
       if row[2] == '':
         self.group_treeview.insert('', 'end', row[0], text = row[1])
-      else:
+    # get sub groups
+    for row in groups:
+      if row[2] !='':
         self.group_treeview.insert(row[2], 'end', row[0], text = row[1])
 
   def button_release(self, event):
@@ -317,13 +321,14 @@ class Pass_Manager:
     info_button_frame = ttk.Frame(info_window)
     info_button_frame.pack()
     # Multiline text
-    text = Text(info_frame, height=8, width=50)
+    text = Text(info_frame, wrap=WORD, height=8, width=50, spacing2=1)
     scroll = ttk.Scrollbar(info_frame, orient=VERTICAL)
-    text.configure(y_scrollcommand=scroll.set)
+    text.configure(yscrollcommand=scroll.set)
     text.pack(side=LEFT)
-    scroll.config(command=text.y_view)
+    scroll.config(command=text.yview)
     scroll.pack(side=RIGHT, fill=Y)
     text.insert(END, content)
+    text.config(state=DISABLED)
 
     info_button = ttk.Button(info_button_frame, text="OK", width='10', command=lambda: self.cancel_action(info_window))
     info_button.pack(pady=10)
