@@ -2,6 +2,7 @@ import hashlib
 import json
 import os
 from pickle import TRUE
+import csv
 
 def hash_password(password):
   plaintext = password.encode()
@@ -25,3 +26,9 @@ def write_json(login, password):
     }
     json_string = json.dumps(data)
     db_file.write(json_string)
+
+def write_csv(path, data):
+  with open(path, 'w', newline='') as csv_file:
+      writer = csv.writer(csv_file, delimiter=',', quoting=csv.QUOTE_MINIMAL)
+      writer.writerow([i[0] for i in data.description])
+      writer.writerows(data)
