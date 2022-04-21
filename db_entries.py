@@ -8,12 +8,18 @@ class MainDatabase:
     self.conn.commit()
 
   def fetch(self, folder):
+    print(folder)
     self.cur.execute("SELECT * FROM credentials WHERE folder=?", (folder,))
     rows = self.cur.fetchall()
     return rows
 
-  def insert(self, name, login, password, folder):
-    self.cur.execute("INSERT INTO credentials VALUES (NULL, ?, ?, ?, ?)", (name, login, password, folder))
+  def fetch_all(self):
+    cursor = self.cur.execute("SELECT * FROM credentials")
+    #rows = self.cur.fetchall()
+    return cursor
+
+  def insert(self, name, login, password, group):
+    self.cur.execute("INSERT INTO credentials VALUES (NULL, ?, ?, ?, ?)", (name, login, password, group))
     self.conn. commit()
 
   def remove(self, id):

@@ -5,6 +5,9 @@ from tkinter import *
 from tkinter import ttk
 from db_entries import MainDatabase
 from db_groups import Database
+from tkinter.filedialog import asksaveasfile
+
+from functions import write_csv
 
 ''' INITIALIZING DB '''
 
@@ -32,7 +35,7 @@ class Pass_Manager:
     menubar.add_cascade(menu=menu_file, label='File')
     menu_file.add_command(label='New')
     menu_file.add_command(label='Open')
-    menu_file.add_command(label='Export')
+    menu_file.add_command(label='Export to CSV', command=self.export_db)
     menubar.add_cascade(menu=menu_edit, label='Group')
     menu_edit.add_command(label='Add Group')
     menu_edit.add_command(label='Edit Group')
@@ -339,6 +342,12 @@ class Pass_Manager:
 
   def cancel_action(self, window):
     window.destroy()
+
+  def export_db(self):
+    db_data = db_entries.fetch_all()
+    data = [('Excel CSV', '*.csv', )]
+    file = asksaveasfile(filetypes = data, defaultextension = data)
+    write_csv(file.name, db_data)
 
 ''' MAIN '''
 if __name__ == '__main__':
