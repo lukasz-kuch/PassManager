@@ -1,7 +1,7 @@
 from tkinter import *
 from tkinter import ttk
 from pass_manager import Pass_Manager
-from functions import *
+from scripts.functions import *
 
 config_file = check_json()
 

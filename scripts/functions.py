@@ -15,11 +15,11 @@ def load_json():
     return json.load(json_data_file)
 
 def check_json():
-  if os.path.isfile('config.json') and os.access('config.json', os.R_OK):
+  if os.path.isfile('./data/config.json') and os.access('./data/config.json', os.R_OK):
     return TRUE
 
 def write_json(login, password):
-  with open('config.json', 'w') as db_file:
+  with open('./data/config.json', 'w') as db_file:
     data = {
       'login': f'{login}',
       'password': f'{hash_password(password)}'
