@@ -5,3 +5,13 @@
 /test.py
 /__pycache__
 config.json
+/venv
+scripts/__pycache__/encrypt.cpython-39.pyc
+data/__pycache__/about.cpython-39.pyc
+db/__pycache__/db_entries.cpython-39.pyc
+scripts/__pycache__/functions.cpython-39.pyc
+scripts/__pycache__/decrypt.cpython-39.pyc
+db/__pycache__/xml_gen.cpython-39.pyc
+data/entries.db
+data/universal.key
+data/groups.xml

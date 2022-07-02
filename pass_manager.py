@@ -1,18 +1,19 @@
 ''' IMPORTING PACKAGES '''
 from textwrap import wrap
-from about import author, version, versions_log
+from xml.dom import minidom
+from data.about import author, version, versions_log
 from tkinter import *
 from tkinter import ttk
-from db_entries import MainDatabase
-from db_groups import Database
+from db.db_entries import Database
+from db.xml_gen import XML_Parser
 from tkinter.filedialog import asksaveasfile
-
-from functions import write_csv
+import scripts.decrypt as decrypt
+from scripts.functions import write_csv
 
 ''' INITIALIZING DB '''
 
-db_entries = MainDatabase('entries.db')
-db_groups = Database('groups.db')
+db_entries = Database('./data/entries.db')
+xml_groups = XML_Parser('./data/groups.xml')
 
 class Pass_Manager:
   def __init__(self, root):
@@ -34,7 +35,9 @@ class Pass_Manager:
     menu_about = Menu(menubar)
     menubar.add_cascade(menu=menu_file, label='File')
     menu_file.add_command(label='New')
+    menu_file.entryconfig(0, state=DISABLED)
     menu_file.add_command(label='Open')
+    menu_file.entryconfig(1, state=DISABLED)
     menu_file.add_command(label='Export to CSV', command=self.export_db)
     menubar.add_cascade(menu=menu_edit, label='Group')
     menu_edit.add_command(label='Add Group')
@@ -121,6 +124,7 @@ class Pass_Manager:
     if group_tv.identify_row(event.y) not in group_tv.selection():
         group_tv.selection_set(group_tv.identify_row(event.y))
     group_iid = group_tv.selection()
+    print(group_iid)
 
   def show_motion(self, event):
     self.group_treeview.configure(cursor="exchange")
@@ -131,24 +135,21 @@ class Pass_Manager:
   def populate_groups(self):
     self.clear_treeview(self.group_treeview)
     self.group_treeview.pack()
-    groups = db_groups.fetch()
-    # get primary groups
-    for row in groups:
-      if row[2] == '':
-        self.group_treeview.insert('', 'end', row[0], text = row[1])
-    # get sub groups
-    for row in groups:
-      if row[2] !='':
-        self.group_treeview.insert(row[2], 'end', row[0], text = row[1])
+    xml_groups.get_nodes(self.group_treeview)
 
   def button_release(self, event):
-    global selected_group, target_parent_iid, entry_iid
+    global selected_group, target, entry_iid
     group_tv = self.group_treeview
     if group_tv.identify_row(event.y) not in group_tv.selection():
         group_tv.selection_set(group_tv.identify_row(event.y))
     target_parent_iid = group_tv.selection()
-    if 'group_iid' in globals() and len(group_iid) > 0 and group_iid[0] != target_parent_iid[0]:
+    if 'group_iid' in globals() and len(group_iid) > 0 and len(target_parent_iid) > 0 and group_iid[0] != target_parent_iid[0]:
       group_tv.move(group_iid[0], target_parent_iid[0], 'end')
+      target = target_parent_iid[0]
+      self.reassign_groups()
+    elif 'group_iid' in globals() and len(group_iid) > 0 and len(target_parent_iid) == 0:
+      group_tv.move(group_iid[0], '', 'end')
+      target = ''
       self.reassign_groups()
     if 'entry_iid' in globals() and len(entry_iid) > 0:
       temp = list(entry_iid)
@@ -160,7 +161,9 @@ class Pass_Manager:
     self.populate_entries()
 
   def reassign_groups(self):
-    db_groups.update_parent(target_parent_iid[0], group_iid[0])
+    print(target)
+    print(group_iid[0])
+    xml_groups.move_node(target, group_iid[0])
 
 
   def add_group_menu(self, event):
@@ -199,16 +202,16 @@ class Pass_Manager:
     folder_id = '';
     if len(group_iid) > 0:
       folder_id = group_iid[0]
-    db_groups.insert(self.group_text.get(), folder_id, None)
+    xml_groups.add_node(folder_id, self.group_text.get(),)
     self.populate_groups()
     group_window.destroy()
 
   def delete_group(self):
-    db_groups.remove(group_iid[0])
+    xml_groups.remove_node(group_iid[0])
     self.populate_groups()
 
   def edit_group(self):
-    db_groups.update(self.group_text.get(), group_iid[0])
+    xml_groups.change_node(self.group_text.get(), group_iid[0])
     self.populate_groups()
     group_window.destroy()
 
@@ -219,7 +222,7 @@ class Pass_Manager:
     if 'group_iid' in globals() and len(group_iid) > 0:
       entries = db_entries.fetch(group_iid[0])
       for row in entries:
-        self.entry_treeview.insert('', 'end', values=row[1:4], iid=row[0])
+        self.entry_treeview.insert('', 'end', values=[row[1], decrypt.Decrypt(row[2]), decrypt.Decrypt(row[3])], iid=row[0])
 
   def select_entry(self, event):
     global entry_iid, selected_entry
@@ -297,6 +300,7 @@ class Pass_Manager:
     cancel_button.grid(row=1, column=1, padx=10)
 
   def add_entry(self):
+    #group = self.get_group(group_iid[0])
     db_entries.insert(self.name_text.get(), self.login_text.get(), self.password_text.get(), group_iid[0])
     self.populate_entries()
     entry_window.destroy()
@@ -311,6 +315,10 @@ class Pass_Manager:
     entry_window.destroy()
 
   '''Generic Functions'''
+
+  def get_group(self, group_id):
+    group = db_groups.fetch_group(group_id)
+    return group
 
   def info_window(self, title, content):
     global entry_window
